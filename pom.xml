@@ -6,6 +6,22 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>sccgit</name>
 	<description>SCC module to use Git repositories</description>
+	
+	<repositories>
+		<repository>
+			<id>jgit-repository</id>
+			<url>https://repo.eclipse.org/content/groups/releases/</url>
+		</repository>
+	</repositories>
+
+	<!-- Core Library -->
+	<dependencies>
+		<dependency>
+			<groupId>org.eclipse.jgit</groupId>
+			<artifactId>org.eclipse.jgit</artifactId>
+			<version>4.2.0.201601211800-r</version>
+		</dependency>
+	</dependencies>
 
 	<scm>
 		<connection>scm:git:git@github.com:fabricionogueira/sccgit.git</connection>
