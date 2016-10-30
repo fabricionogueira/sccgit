@@ -8,7 +8,7 @@
  
         <!-- Connection settings -->
         <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
-        <property name="hibernate.connection.url">jdbc:postgresql://localhost/sciphy-scc2git</property>
+        <property name="hibernate.connection.url">jdbc:postgresql://172.31.6.99:5432/scc2git</property>
         <property name="hibernate.connection.username">scc</property>
         <property name="hibernate.connection.password">scc</property>
  
