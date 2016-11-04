@@ -13,33 +13,38 @@ import br.uff.ic.sccgit.model.EActivation;
 
 public class EActivationDao {
 	
-	public List<EActivation> getLastActivationsFromWorkflow(String workflow) {
+	public List<EActivation> getActivations(String workflow, String activityName, String machineAddres) {
 		SessionFactory sessionFactory = new Configuration().configure().buildSessionFactory();
 		Session session = sessionFactory.openSession();
 		session.beginTransaction();
 		
 		List<EActivation> l = new ArrayList<EActivation>();
-		SQLQuery query= session.createSQLQuery("select taskid, actid, folder, subfolder from eactivation where actid = (\n" + 
-				"select \n" + 
-				"	max(eao.actid)\n" + 
-				"from \n" + 
-				"	eworkflow e,\n" + 
-				"	eactivity ea,\n" + 
-				"	eactivation eao\n" + 
-				"where\n" + 
-				"	e.ewkfid = ea.wkfid and\n" + 
-				"	ea.actid = eao.actid and\n" + 
-				"	e.tag =  :tag and\n" + 
-				"	folder is not null and folder !=  '')");
+		SQLQuery query= session.createSQLQuery(" select "
+													+ " eao.taskid, ea.actid, wkfid, ea.tag, em.machineid, folder, subfolder "
+												+ " from "
+													+ " eworkflow ew, "
+													+ " eactivity ea, "
+													+ " eactivation eao, "
+													+ "	emachine em "
+												+ " where "
+													+ "	ew.ewkfid = ea.wkfid and "
+													+ "	ea.actid = eao.actid and "
+													+ "	eao.machineid = em.machineid and "
+													+ "	ew.tag = :wfTag and "
+													+ "	ea.tag = :actTag and "
+													+ "	em.address = :ip");
 		
-		List<Object[]> rows = query.setString("tag", workflow).list();
+		List<Object[]> rows = query.setString("tag", workflow)
+									.setString("actTag", activityName)
+									.setString("ip", machineAddres)
+									.list();
 		
 		for(Object[] row : rows) {
 			EActivation ea = new EActivation();
 			ea.setTaskId(Integer.parseInt(row[0].toString()));
 			ea.setActId(Integer.parseInt(row[1].toString()));
-			ea.setFolder(row[2].toString());
-			ea.setSubfolder(row[3].toString());
+			ea.setFolder(row[5].toString());
+			ea.setSubfolder(row[6].toString());
 			l.add(ea);
 		}
 

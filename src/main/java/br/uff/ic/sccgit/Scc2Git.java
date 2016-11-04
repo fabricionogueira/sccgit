@@ -2,6 +2,7 @@ package br.uff.ic.sccgit;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
@@ -115,10 +116,13 @@ public class Scc2Git {
             }
             ++i;
         }
+        
+        InetAddress ip = InetAddress.getLocalHost();
+        
         git = new Scc2GitInterface(localRepo);
         String workflowTagName = Scc2GitUtils.getWorkflowTag((String)pathToWfFile);
         EActivationDao eaDao = new EActivationDao();
-        List<EActivation> activations = eaDao.getLastActivationsFromWorkflow(workflowTagName);
+        List<EActivation> activations = eaDao.getActivations(workflowTagName, activityName, ip.toString());
         for (EActivation eActivation : activations) {
             String sourceDirectory = String.valueOf(eActivation.getFolder()) + eActivation.getSubfolder();
             String toDirectory = String.valueOf(localRepo) + activityName + sourceDirectory;
