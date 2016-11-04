@@ -34,7 +34,7 @@ public class EActivationDao {
 													+ "	ea.tag = :actTag and "
 													+ "	em.address = :ip");
 		
-		List<Object[]> rows = query.setString("tag", workflow)
+		List<Object[]> rows = query.setString("wfTag", workflow)
 									.setString("actTag", activityName)
 									.setString("ip", machineAddres)
 									.list();
