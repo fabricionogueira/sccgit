@@ -53,13 +53,18 @@ public class Scc2Git {
         git.createBranch(branchName);
     }
 
-    private static void addFiles(String fromDirectory, String toDirectory) throws IOException, NoFilepatternException, GitAPIException {
+    private static void addFiles(String fromDirectory, String toDirectory, Boolean spaceOptimization) throws IOException, NoFilepatternException, GitAPIException {
         File sourceFolder = new File(fromDirectory);
         File[] listOfFiles = sourceFolder.listFiles();
         int i = 0;
         while (i < listOfFiles.length) {
             if (listOfFiles[i].isFile()) {
-                Files.copy(listOfFiles[i].toPath(), new File(String.valueOf(toDirectory) + listOfFiles[i].getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+            	if (!spaceOptimization) {
+            		Files.copy(listOfFiles[i].toPath(), new File(String.valueOf(toDirectory) + listOfFiles[i].getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+            	} else {
+            		//usar hardlinks
+            		Files.createLink(new File(String.valueOf(toDirectory) + listOfFiles[i].getName()).toPath(), listOfFiles[i].toPath());
+            	}
                 git.addFiles(".");
             }
             ++i;
@@ -116,6 +121,7 @@ public class Scc2Git {
         String pathToWfFile = "";
         String activityName = "";
         String message = "";
+        Boolean spaceOptimization = false;
         int i = 0;
         while (i < args.length) {
             if (args[i].equals("-lr") && !(localRepo = args[i + 1]).endsWith("/")) {
@@ -130,20 +136,28 @@ public class Scc2Git {
             if (args[i].equals("-m")) {
                 message = args[i + 1];
             }
+            if (args[i].equals("-so")) {
+            	String spaceOptimizationStr = args[i + 1];
+            	spaceOptimization = spaceOptimizationStr == "s" || spaceOptimizationStr == "S";
+            }
             ++i;
         }
         
         String ip = InetAddress.getLocalHost().getHostAddress();
+        
         git = new Scc2GitInterface(localRepo);
+        
         String workflowTagName = Scc2GitUtils.getWorkflowTag((String)pathToWfFile);
+        
         EActivationDao eaDao = new EActivationDao();
         List<EActivation> activations = eaDao.getActivations(workflowTagName, activityName, ip);
+        
         for (EActivation eActivation : activations) {
             String sourceDirectory = String.valueOf(eActivation.getFolder()) + eActivation.getSubfolder();
             String toDirectory = String.valueOf(localRepo) + activityName + "/" + eActivation.getSubfolder();
             File dir = new File(toDirectory);
             dir.mkdirs();
-            Scc2Git.addFiles(sourceDirectory, toDirectory);
+            Scc2Git.addFiles(sourceDirectory, toDirectory, spaceOptimization);
             Scc2Git.commit(message);
         }
     }
@@ -176,6 +190,7 @@ public class Scc2Git {
         String branchName = "";
         String gitUser = "";
         String gitUserPwd = "";
+        Boolean spaceOptimization = false;
         int i = 0;
         while (i < args.length) {
             if (args[i].equals("-rr")) {
@@ -196,11 +211,15 @@ public class Scc2Git {
             if (args[i].equals("-p")) {
                 gitUserPwd = args[i + 1];
             }
+            if (args[i].equals("-so")) {
+            	String spaceOptimizationStr = args[i + 1];
+            	spaceOptimization = spaceOptimizationStr == "S" || spaceOptimizationStr == "s";
+            }
             ++i;
         }
         Scc2Git.prepareRepository(remoteRepo, localRepo);
         Scc2Git.createBranch(branchName);
-        Scc2Git.addFiles(wfDirectory, localRepo);
+        Scc2Git.addFiles(wfDirectory, localRepo, spaceOptimization);
         Scc2Git.commit(String.valueOf(branchName) + " commit.");
         Scc2Git.push(gitUser, gitUserPwd);
     }
@@ -210,16 +229,16 @@ public class Scc2Git {
             List<String> argsL = Arrays.asList(args);
             if (argsL.size() != 14 && argsL.size() != 8 && argsL.size() != 6 && argsL.size() != 4) {
                 System.out.println("Wrong usage! Try one of these: \n"
-                				 + "java -jar scc2git -rr <git_remote_repository> -lr <git_local_repository> -wd <workflow_directory> -b <branchName> -m <message> -u <git_user> -p <git_user_password>\n"
+                				 + "java -jar scc2git -rr <git_remote_repository> -lr <git_local_repository> -wd <workflow_directory> -b <branchName> -m <message> -u <git_user> -p <git_user_password> -so <space_optimization_(s|n)>\n"
                 				 + "java -jar scc2git -rr <git_remote_repository> -lr <git_local_repository> -b <branch_name>\n"
-                				 + "java -jar scc2git -lr <git_local_repository> -pwf <path_to_workflow_file> -an <activity_name> -m <message>\n"
+                				 + "java -jar scc2git -lr <git_local_repository> -pwf <path_to_workflow_file> -an <activity_name> -m <message> -so <space_optimization_(s|n)>\n"
                 				 + "java -jar scc2git -lr <git_local_repository> -u <username> -p <password>\n"
                 				 + "java -jar scc2git -lr <git_local_repository> -b <branch_name>");
-            } else if (argsL.size() == 14) {
+            } else if (argsL.size() == 16) {
                 Scc2Git.fullCommit(args);
             } else if (argsL.size() == 6 && argsL.contains("-b")) {
                 Scc2Git.branchCreate(args);
-            } else if (argsL.size() == 8 && argsL.contains("-m")) {
+            } else if (argsL.size() == 10 && argsL.contains("-m")) {
                 Scc2Git.addAndCommit(args);
             } else if (argsL.size() == 6 && argsL.contains("-u")) {
                 Scc2Git.push(args);
