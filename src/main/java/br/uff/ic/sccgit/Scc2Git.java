@@ -36,16 +36,16 @@ import br.uff.ic.sccgit.model.EActivation;
 public class Scc2Git {
     private static Scc2GitInterface git;
 
-    private static void pull(String localRepo) throws SccGitException, IOException, WrongRepositoryStateException, InvalidConfigurationException, DetachedHeadException, InvalidRemoteException, CanceledException, RefNotFoundException, RefNotAdvertisedException, NoHeadException, TransportException, GitAPIException {
+    private static void pull(String branchName, String localRepo) throws SccGitException, IOException, WrongRepositoryStateException, InvalidConfigurationException, DetachedHeadException, InvalidRemoteException, CanceledException, RefNotFoundException, RefNotAdvertisedException, NoHeadException, TransportException, GitAPIException {
         git = new Scc2GitInterface(localRepo);
-        git.pull();
+        git.pull(branchName);
     }
 
     private static void prepareRepository(String remoteRepo, String localRepo) throws InvalidRemoteException, TransportException, GitAPIException, SccGitException, IOException {
         if (!Scc2GitInterface.isValidLocalGitRepository((String)localRepo)) {
             git = new Scc2GitInterface(remoteRepo, localRepo, "master");
         } else {
-            Scc2Git.pull(localRepo);
+            Scc2Git.pull("master", localRepo);
         }
     }
 
@@ -94,6 +94,22 @@ public class Scc2Git {
         git = new Scc2GitInterface(localRepo);
         Scc2Git.push(username, password);
     }
+    
+    private static void pull(String[] args) throws SccGitException, IOException, WrongRepositoryStateException, InvalidConfigurationException, DetachedHeadException, InvalidRemoteException, CanceledException, RefNotFoundException, RefNotAdvertisedException, NoHeadException, TransportException, GitAPIException  {
+        String localRepo = "";
+        String branchName = "";
+        int i = 0;
+        while (i < args.length) {
+            if (args[i].equals("-lr") && !(localRepo = args[i + 1]).endsWith("/")) {
+                localRepo = String.valueOf(localRepo) + "/";
+            }
+            if (args[i].equals("-b")) {
+                branchName = args[i + 1];
+            }
+            ++i;
+        }
+        Scc2Git.pull(branchName, localRepo);
+    }
 
     private static void addAndCommit(String[] args) throws SccGitException, IOException, NoFilepatternException, GitAPIException, ParserConfigurationException, SAXException {
         String localRepo = "";
@@ -117,15 +133,14 @@ public class Scc2Git {
             ++i;
         }
         
-        InetAddress ip = InetAddress.getLocalHost();
-        
+        String ip = InetAddress.getLocalHost().getHostAddress();
         git = new Scc2GitInterface(localRepo);
         String workflowTagName = Scc2GitUtils.getWorkflowTag((String)pathToWfFile);
         EActivationDao eaDao = new EActivationDao();
-        List<EActivation> activations = eaDao.getActivations(workflowTagName, activityName, ip.toString());
+        List<EActivation> activations = eaDao.getActivations(workflowTagName, activityName, ip);
         for (EActivation eActivation : activations) {
             String sourceDirectory = String.valueOf(eActivation.getFolder()) + eActivation.getSubfolder();
-            String toDirectory = String.valueOf(localRepo) + activityName + sourceDirectory;
+            String toDirectory = String.valueOf(localRepo) + activityName + "/" + eActivation.getSubfolder();
             File dir = new File(toDirectory);
             dir.mkdirs();
             Scc2Git.addFiles(sourceDirectory, toDirectory);
@@ -193,8 +208,13 @@ public class Scc2Git {
     public static void main(String[] args) {
         try {
             List<String> argsL = Arrays.asList(args);
-            if (argsL.size() != 14 && argsL.size() != 6 && argsL.size() != 8) {
-                System.out.println("Wrong usage! Try one of these: \njava -jar scc2git -rr <git_remote_repository> -lr <git_local_repository> -wd <workflow_directory> -b <branchName> -m <message> -u <git_user> -p <git_user_password>\njava -jar scc2git -rr <git_remote_repository> -lr <git_local_repository> -b <branchName> \njava -jar scc2git -lr <git_local_repository> -pwf <path_to_workflow_file> -an <activity_name> -m <message>\njava -jar scc2git -lr <git_local_repository> -u <username> -p <password>");
+            if (argsL.size() != 14 && argsL.size() != 8 && argsL.size() != 6 && argsL.size() != 4) {
+                System.out.println("Wrong usage! Try one of these: \n"
+                				 + "java -jar scc2git -rr <git_remote_repository> -lr <git_local_repository> -wd <workflow_directory> -b <branchName> -m <message> -u <git_user> -p <git_user_password>\n"
+                				 + "java -jar scc2git -rr <git_remote_repository> -lr <git_local_repository> -b <branch_name>\n"
+                				 + "java -jar scc2git -lr <git_local_repository> -pwf <path_to_workflow_file> -an <activity_name> -m <message>\n"
+                				 + "java -jar scc2git -lr <git_local_repository> -u <username> -p <password>\n"
+                				 + "java -jar scc2git -lr <git_local_repository> -b <branch_name>");
             } else if (argsL.size() == 14) {
                 Scc2Git.fullCommit(args);
             } else if (argsL.size() == 6 && argsL.contains("-b")) {
@@ -203,6 +223,8 @@ public class Scc2Git {
                 Scc2Git.addAndCommit(args);
             } else if (argsL.size() == 6 && argsL.contains("-u")) {
                 Scc2Git.push(args);
+            } else if (argsL.size() == 4) {
+            	Scc2Git.pull(args);
             }
         }
         catch (InvalidRemoteException e) {

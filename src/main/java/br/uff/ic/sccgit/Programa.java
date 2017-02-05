@@ -1,21 +1,11 @@
 package br.uff.ic.sccgit;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.net.InetAddress;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-
-import br.uff.ic.sccgit.dao.EActivationDao;
-import br.uff.ic.sccgit.model.EActivation;
 
 public class Programa {
 /*
@@ -72,16 +62,20 @@ public class Programa {
 	}*/
 	
 	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException {
-		EActivationDao eaDao = new EActivationDao();
-		List<EActivation> eas = eaDao.getLastActivationsFromWorkflow("default");
+//		EActivationDao eaDao = new EActivationDao();
+//		List<EActivation> eas = eaDao.getActivations(workflow, activityName, machineAddres)("default");
 		
-		for (EActivation eActivation : eas) {
-			System.out.println(eActivation.getActId());
-			System.out.println(eActivation.getTaskId());
-			System.out.println(eActivation.getFolder());
-			System.out.println(eActivation.getSubfolder());
-		}
+//		for (EActivation eActivation : eas) {
+//			System.out.println(eActivation.getActId());
+//			System.out.println(eActivation.getTaskId());
+//			System.out.println(eActivation.getFolder());
+//			System.out.println(eActivation.getSubfolder());
+//		}
 		
+		
+
+		InetAddress IP=InetAddress.getLocalHost();
+		System.out.println("IP of my system is := "+IP.getHostAddress());
 		
 		
 	}

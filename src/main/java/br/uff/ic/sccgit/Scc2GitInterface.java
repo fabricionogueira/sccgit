@@ -195,7 +195,7 @@ public class Scc2GitInterface {
 		pc.call();
 	}
 	
-	public void pull() throws WrongRepositoryStateException, InvalidConfigurationException, DetachedHeadException, InvalidRemoteException, CanceledException, RefNotFoundException, RefNotAdvertisedException, NoHeadException, TransportException, GitAPIException {
-		git.pull().call();
+	public void pull(String branchName) throws WrongRepositoryStateException, InvalidConfigurationException, DetachedHeadException, InvalidRemoteException, CanceledException, RefNotFoundException, RefNotAdvertisedException, NoHeadException, TransportException, GitAPIException {
+		git.pull().setRemote("origin").setRemoteBranchName(branchName).call();
 	}
 }
